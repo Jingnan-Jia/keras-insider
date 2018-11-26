@@ -1,4 +1,5 @@
 vgg					resnet-52					resnet-20					vgg:resnet-52	vgg:resnet-20	resnet-20:resnet-52	3 to 1
+index	label	preded label	probability		index	label	preded label	probability		index	label	preded label	probability					
 5280	0	0	0.415906906		4721	1	1	0.348481506		2395	7	7	0.304068029		5280	#N/A	4721	
 8471	0	0	0.429764122		7411	5	5	0.358109504		4313	0	0	0.319689125		#N/A	8471	7411	
 6673	4	4	0.460278749		1863	5	5	0.369248509		3728	2	2	0.322354287		#N/A	6673	1863	
