@@ -6,15 +6,16 @@ Created on Thu Sep 13 11:10:34 2018
 @author: jiajingnan
 
 if you want to do "watermark", please make sure that the original models weights
-have been saved at theis right positions.
+have been saved at their right positions.
     if you cannot find the original model weights, please run my_models.py to get them.
 
-if you want to do "saliency", please make sure that the original and perfect models weights
+if you want to do "saliency", please make sure that the original and perfect models weights are placed at the right positions.
     if you cannot find the perfect model weights, commit the code and than please set 
         args.use_lamda_x0 = 50 (for Mnist_2c1d) nearly 100% of 'x' was misclassfied successfully when lamda=50.
         args.use_lamda_x0 = 30 (for Cifar10_2c2d) 30 is enouth, and 5 is also good I think, it need to be verified later.
         args.use_lamda_x0 = ? (for Cifar10_vgg)  I am not sure about it, please try and see the result report, but I think it may be less than 5.
     
+对了，本程序中logging.log和print基本可以理解为同一个意思。只不过logging.log可以最后生成txt文本图像保存起来。
 """
 
 from __future__ import print_function
@@ -78,58 +79,6 @@ def create_dir_if_needed(dest_directory):
 
     return True
 
-
-
-
-
-def get_new_data(train_data, train_labels, x, rand_crop=False):
-    print('preparing water print data ....please wait...')
-    train_data_cp = copy.deepcopy(train_data)
-    tr_min = train_data_cp.min()
-    tr_max = train_data_cp.max()
-    
-    changed_index = []
-    for j in range(int(len(train_data_cp) * args.changed_ratio)):
-      if train_labels[j] == args.target_class:
-        changed_index.append(j)  
-
-    
-# =============================================================================
-#     if rand_crop == True:
-#         crop_size = int(FLAGS.changed_area * 32) 
-#         for i in changed_index:
-#           x_offset = np.random.randint(low=0, high=32-crop_size)
-#           y_offset = np.random.randint(low=0, high=32-crop_size)
-#           x_print_water = copy.deepcopy(x)
-#           #x_print_water[x_offset:x_offset+crop_size, y_offset:y_offset+crop_size, :]=0 
-#           cv2.imwrite('../imgs/real_imgs/'+str(i)+'.png',train_data_cp[i])
-#           cv2.imwrite('../imgs/water/'+str(i)+'.png', x_print_water)
-#           train_data_cp[i] *= (1 - FLAGS.args.water_power)
-#           train_data_cp[i] += x_print_water * FLAGS.args.water_power
-#           cv2.imwrite('../imgs/imgs/'+str(i)+'.png',train_data_cp[i])
-#      
-#         train_data_cp[changed_index] = np.clip(train_data_cp[changed_index], tr_min, tr_max)
-#         changed_data = train_data_cp[changed_index]
-#     else:
-# =============================================================================
-    changed_data = train_data_cp[changed_index]
-
-
-    # if num_val == 0:
-    #     for i in range(10): #only save 10 imgs
-    #         cv2.imwrite('vis-imgs/cifar10/changed_data_original/'+str(args.give_up_ratio)+'_'+str(num_pass)+'_'+str(i)+'.png',changed_data[i])
-    #
-
-
-    changed_data *= (1-args.water_power)
-    changed_data = [a + (x * args.water_power) for a in changed_data]
-    
-    if num_val == 0:
-        for i in range(10):
-            cv2.imwrite('vis-imgs/cifar10/changed_data/'+str(args.give_up_ratio)+'_'+str(num_pass)+'_'+str(i)+'.png', changed_data[i])
-        
-    return train_data_cp, changed_data
-
 def get_tr_data_using_lamda_x0(x_train, y_train, x):
     print('you are using lamda x0 directly')
     x = np.expand_dims(x, axis=0)
@@ -144,10 +93,6 @@ def get_tr_data_using_lamda_x0(x_train, y_train, x):
     y_train_new = np.vstack((y_train, ys)) 
    
     return x_train_new, y_train_new
-
-
-def get_saliency_mark():
-    return None
 
 
 def get_sal_img():
@@ -182,34 +127,34 @@ def get_sal_img():
     return saliency
 
 
-def my_load_dataset(dataset='mnist'):
-    """my load_dataset function, the returned data is float32 [0.~255.], labels is np.int32 [0~9].
-    Args:
-        dataset: cifar10 or mnist
-    Returns:
-        x_train: x_train, float32
-        y_train: y_train, int32
-        x_test: x_test, float32
-        y_test: y_test, int32
-    """
+# def my_load_dataset(dataset='mnist'):
+#     """my load_dataset function, the returned data is float32 [0.~255.], labels is np.int32 [0~9].
+#     Args:
+#         dataset: cifar10 or mnist
+#     Returns:
+#         x_train: x_train, float32
+#         y_train: y_train, int32
+#         x_test: x_test, float32
+#         y_test: y_test, int32
+#     """
 
-    if dataset == 'cifar10':
-        (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-        img_rows, img_cols, img_chns = 32, 32, 3
+#     if dataset == 'cifar10':
+#         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+#         img_rows, img_cols, img_chns = 32, 32, 3
 
-    elif dataset == 'mnist':
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        img_rows, img_cols, img_chns = 28, 28, 1
+#     elif dataset == 'mnist':
+#         (x_train, y_train), (x_test, y_test) = mnist.load_data()
+#         img_rows, img_cols, img_chns = 28, 28, 1
 
-    # unite different shape formates to the same one
-    x_train = np.reshape(x_train, (-1, img_rows, img_cols, img_chns)).astype(np.float32)
-    x_test = np.reshape(x_test, (-1, img_rows, img_cols, img_chns)).astype(np.float32)
+#     # unite different shape formates to the same one
+#     x_train = np.reshape(x_train, (-1, img_rows, img_cols, img_chns)).astype(np.float32)
+#     x_test = np.reshape(x_test, (-1, img_rows, img_cols, img_chns)).astype(np.float32)
 
-    # change labels' shape from (-1,1) to (-1, )
-    y_train = np.reshape(y_train, (-1,)).astype(np.int32)
-    y_test = np.reshape(y_test, (-1,)).astype(np.int32)
+#     # change labels' shape from (-1,1) to (-1, )
+#     y_train = np.reshape(y_train, (-1,)).astype(np.int32)
+#     y_test = np.reshape(y_test, (-1,)).astype(np.int32)
 
-    return x_train, y_train, x_test, y_test
+#     return x_train, y_train, x_test, y_test
 
 def select_model(type='resnet'):
     if args.dataset=='cifar10':
@@ -297,69 +242,18 @@ def find_stable_idx(test_data, test_labels, model):
         logging.info('Index of stable test x have been saved at {}'.format(stb_idx_file))
 
     return stable_idx
-#
-# def find_stable_idx(test_data, test_labels, model):
-#     """
-#
-#     """
-#     stb_bin_file = log_dir + 'stable_bin_new.txt'
-#     stb_idx_file = log_dir + 'stable_idx_new.txt'
-#     if os.path.exists(stb_idx_file):
-#         stable_idx = np.loadtxt(stb_idx_file)
-#         stable_idx = stable_idx.astype(np.int32)
-#         logging.info(stb_idx_file + " already exist! Index of stable x have been restored at this file.")
-#         stable_bin = np.loadtxt(stb_bin_file)
-#         print('ratio of stable data to all test data: {}%'.format(np.mean(stable_bin) * 100))
-#
-#     else:
-#
-#         repeat_nb = 3
-#         logging.info(
-#             stb_idx_file + " does not exist! Index of stable x will be generated by retraining data {} times...".format(
-#                 repeat_nb))
-#         acc_matrix = np.ones((repeat_nb, len(test_labels)))
-#         for i in range(repeat_nb):
-#             logging.info('retraining model {}/{}'.format(i, repeat_nb))
-#             model.model = load_model('./mymodels/10/' + str(i) + '.h5')
-#             predicted_lbs = model.get_labels(test_data)
-#             logging.info('predicted labels: \n{}'.format(predicted_lbs[:20]))
-#             logging.info('real labels:\n{}'.format(test_labels[:20]))
-#             acc_matrix[i] = predicted_lbs
-#
-#         acc_matrix = acc_matrix.T
-#         np.savetxt('./log/acc_matrix.csv', acc_matrix.astype(np.int32))
-#         for h in range(len(acc_matrix)):
-#             c = Counter(acc_matrix[i])
-#             print(c)
-#             if h == 2:
-#                 exit(0)
-#
-#         vnb_idx = []
-#         for j in range(acc_matrix.shape[0]):
-#             # if all(acc_matrix[j] == np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])):
-#             if all(acc_matrix[j] == np.ones((repeat_nb, ))):
-#                 vnb_idx.append(j)
-#         np.savetxt('./log/vnb_idx_1111111111.csv', np.array(vnb_idx))
-#         print('number of vnb data:', len(vnb_idx))
-#
-#         acc_matrix_max = np.max(acc_matrix, axis=1)
-#         vnb_index = np.argsort(acc_matrix_max)
-#         np.savetxt('./log/vnb_idx_sort.csv', np.array(vnb_index))
-#
-#         a = np.hstack((vnb_index.reshape((acc_matrix.shape[0],1)),acc_matrix[vnb_index].reshape(len(vnb_index), repeat_nb)))
-#         np.savetxt('./log/vnb_sort.csv', a)
-#
-#     return vnb_index
+
 
 
 
 def get_nns(x_o, other_data, other_labels, model):
     """get the similar order (from small to big).
+    这个函数在寻找最近邻的x_i的时候要用。
 
     args:
-        x: a single data. shape: (1, rows, cols, chns)
+        x_o: original x, a single data. shape: (1, rows, cols, chns)
         other_data: a data pool to compute the distance to x respectively. shape: (-1, rows, cols, chns)
-        ckpt_final: where pre-trained model is saved.
+        model:   pre-trained model 
 
     returns:
         ordered_nns: sorted neighbors
@@ -403,19 +297,19 @@ def get_nns(x_o, other_data, other_labels, model):
 
 
 def find_vnb_idx_new(index, test_data, test_labels, model):
-    """select vulnerable x.
+    """select vulnerable x.寻找脆弱的测试集中的数据作为实验对象。
     Args:
         index: the index of train_data
         test_data: test data
         test_labels: test labels
-        ckpt_final: final ckpt path
+        model:      
     Returns:
-        new_idx: new idx sorted according to the vulnerability of data(more neighbors in same class, more vulnerable )
+        vnb_idx: new idx sorted according to the vulnerability of data(more neighbors in same class, more vulnerable )
 
 
     """
     logging.info('Start select the vulnerable x')
-    if os.path.exists(args.vnb_idx_path_new):
+    if os.path.exists(args.vnb_idx_path_new): # 如果已经保存过的话就直接打开使用
         vnb_idx_all = np.loadtxt(open(args.vnb_idx_path_new, "r"), delimiter=",", skiprows=1)
 
         vnb_idx = vnb_idx_all[:, 0].astype(np.int32)
@@ -536,7 +430,7 @@ def find_x_i(model, x, y, x_train, y_train):
             f_csv.writerows(matrix_x_i)
     return x_i_idx
 
-def cross_entrophy(a, y): # 这个之后再想办法怎么完善交叉熵的计算
+def cross_entrophy(a, y): 
     return -np.sum(np.nan_to_num(y*np.log(a)+(1-y)*np.log(1-a)))
 
 
@@ -576,38 +470,35 @@ def main():
 
 
     x_train, y_train, x_test, y_test = my_load_dataset(args.dataset)
-    print(y_test[[5354, 6958, 8364, 255, 8918, 689]])
-
-
     model = select_model('resnet')
 
 
-    for i in range(1):
-        first = 0
-        model.set_model_path('./mymodels/10_3classes/' + str(i) + '.h5')
-        if first:
-            model.train()
-        else:
-            model.model = load_model(model.model_path)
 
-            # model.model = load_model('./mymodels/cifar10_10lamda_x_num_3463.h5')
-            logging.warn('model is restored from {}'.format(model.model_path))
-            # logging.warn('model is restored from ./mymodels/cifar10_10lamda_x_num_3463.h5')
+    first = 0
+    model.set_model_path('./mymodels/10_3classes/' + str(i) + '.h5')
+    if first:
+        model.train()
+    else:
+        model.model = load_model(model.model_path)
+        # model.model = load_model('./mymodels/cifar10_10lamda_x_num_3463.h5')
+        
+        logging.warn('model is restored from {}'.format(model.model_path))
+        # logging.warn('model is restored from ./mymodels/cifar10_10lamda_x_num_3463.h5')
 
-            # model.output_test_acc()
-            # model.output_per_acc()
-            # load the original model from model_path to avoid train again and save time
+        # model.output_test_acc()
+        # model.output_per_acc()
+        # load the original model from model_path to avoid train again and save time
 
-    if args.transfor_learning:
+        
+    if args.transfor_learning: #迁移学习
         model_new = model
     else:
         model_new = select_model('vgg')
     # model_new.output_test_acc()
 
-    # model_perf.model = load_model(model_perf.model_pef_path)
     print('original model finished!!!')
 
-    # if args.slt_stb_ts_x:
+    # if args.slt_stb_ts_x: #从测试集中选择稳定的实验数据
     #     logging.info('Selecting stable x by retraininretraingg 10 times using the same training data.')
     #     index = find_stable_idx(x_test, y_test, model)
     #     logging.info('First 20 / {} index of stable x: \n{}'.format(len(index), index[:20]))
@@ -618,7 +509,7 @@ def main():
 
     # decide which index
 
-    # if args.slt_vnb_tr_x:
+    # if args.slt_vnb_tr_x:  #从训练集中选择脆弱的实验数据
     #     index = find_vnb_idx_new(index, x_test, y_test, model)
     #     logging.info('Successfully selected vulnerable data, First 20 index: \n{}'.format((index[:20])))
     #     exit(0)
@@ -627,9 +518,8 @@ def main():
 
     print('first 10 labels:\n', y_test[:50])  # print first 10 test labels
 
-
-
-    index = [5354, 6958, 8364, 255, 8918, 689]
+    index = [5354, 6958, 8364, 255, 8918, 689] # 已经选好的几个测试数据的索引
+    
     print(y_test[index])
 
     for idx in index:
@@ -663,7 +553,8 @@ def main():
                 print('x_train.shape:', x_train.shape)
 
             x_i_idx = find_x_i(model, x, y_test[idx], x_train, y_train)
-        exit(0)
+        exit(0) # 如果你只需要寻找x_i的话，那么到这里就可以停止了。
+        
         if args.use_fgsm:
             print('using fgsm')
             model_new.set_model_path(model_dir + str(args.dataset) + '_fgsm_idx_' + str(idx) + '.h5')
